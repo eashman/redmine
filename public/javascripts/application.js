@@ -1,5 +1,5 @@
 /* Redmine - project management software
-   Copyright (C) 2006-2015  Jean-Philippe Lang */
+   Copyright (C) 2006-2016  Jean-Philippe Lang */
 
 function checkAll(id, checked) {
   $('#'+id).find('input[type=checkbox]:enabled').prop('checked', checked);
@@ -275,6 +275,8 @@ function toggleOperator(field) {
     case "y":
     case "o":
     case "c":
+    case "*o":
+    case "!o":
       enableValues(field, []);
       break;
     case "><":
@@ -315,8 +317,8 @@ function toggleMultiSelect(el) {
 }
 
 function showTab(name, url) {
-  $('div#content .tab-content').hide();
-  $('div.tabs a').removeClass('selected');
+  $('#tab-content-' + name).parent().find('.tab-content').hide();
+  $('#tab-content-' + name).parent().find('div.tabs a').removeClass('selected');
   $('#tab-content-' + name).show();
   $('#tab-' + name).addClass('selected');
   //replaces current URL with the "href" attribute of the current link
@@ -329,16 +331,22 @@ function showTab(name, url) {
 
 function moveTabRight(el) {
   var lis = $(el).parents('div.tabs').first().find('ul').children();
+  var bw = $(el).parents('div.tabs-buttons').outerWidth(true);
   var tabsWidth = 0;
   var i = 0;
   lis.each(function() {
     if ($(this).is(':visible')) {
-      tabsWidth += $(this).width() + 6;
+      tabsWidth += $(this).outerWidth(true);
     }
   });
-  if (tabsWidth < $(el).parents('div.tabs').first().width() - 60) { return; }
+  if (tabsWidth < $(el).parents('div.tabs').first().width() - bw) { return; }
+  $(el).siblings('.tab-left').removeClass('disabled');
   while (i<lis.length && !lis.eq(i).is(':visible')) { i++; }
+  var w = lis.eq(i).width();
   lis.eq(i).hide();
+  if (tabsWidth - w < $(el).parents('div.tabs').first().width() - bw) {
+    $(el).addClass('disabled');
+  }
 }
 
 function moveTabLeft(el) {
@@ -347,6 +355,10 @@ function moveTabLeft(el) {
   while (i < lis.length && !lis.eq(i).is(':visible')) { i++; }
   if (i > 0) {
     lis.eq(i-1).show();
+    $(el).siblings('.tab-right').removeClass('disabled');
+  }
+  if (i <= 1) {
+    $(el).addClass('disabled');
   }
 }
 
@@ -354,19 +366,24 @@ function displayTabsButtons() {
   var lis;
   var tabsWidth;
   var el;
+  var numHidden;
   $('div.tabs').each(function() {
     el = $(this);
     lis = el.find('ul').children();
     tabsWidth = 0;
+    numHidden = 0;
     lis.each(function(){
       if ($(this).is(':visible')) {
-        tabsWidth += $(this).width() + 6;
+        tabsWidth += $(this).outerWidth(true);
+      } else {
+        numHidden++;
       }
     });
-    if ((tabsWidth < el.width() - 60) && (lis.first().is(':visible'))) {
+    var bw = $(el).parents('div.tabs-buttons').outerWidth(true);
+    if ((tabsWidth < el.width() - bw) && (lis.first().is(':visible'))) {
       el.find('div.tabs-buttons').hide();
     } else {
-      el.find('div.tabs-buttons').show();
+      el.find('div.tabs-buttons').show().children('button.tab-left').toggleClass('disabled', numHidden == 0);
     }
   });
 }
@@ -473,10 +490,13 @@ function randomKey(size) {
   return key;
 }
 
-function updateIssueFrom(url) {
+function updateIssueFrom(url, el) {
   $('#all_attributes input, #all_attributes textarea, #all_attributes select').each(function(){
     $(this).data('valuebeforeupdate', $(this).val());
   });
+  if (el) {
+    $("#form_update_triggered_by").val($(el).attr('id'));
+  }
   return $.ajax({
     url: url,
     type: 'post',
@@ -556,7 +576,13 @@ function beforeShowDatePicker(input, inst) {
       break;
     case "issue_due_date" :
       if ($("#issue_start_date").size() > 0) {
-        default_date = $("#issue_start_date").val();
+        var start_date = $("#issue_start_date").val();
+        if (start_date != "") {
+          start_date = new Date(Date.parse(start_date));
+          if (start_date > new Date()) {
+            default_date = $("#issue_start_date").val();
+          }
+        }
       }
       break;
   }
@@ -609,6 +635,13 @@ function setupAjaxIndicator() {
   });
 }
 
+function setupTabs() {
+  if($('.tabs').length > 0) {
+    displayTabsButtons();
+    $(window).resize(displayTabsButtons);
+  }
+}
+
 function hideOnLoad() {
   $('.hol').hide();
 }
@@ -651,7 +684,19 @@ $(document).ready(function(){
   toggleDisabledInit();
 });
 
+function keepAnchorOnSignIn(form){
+  var hash = decodeURIComponent(self.document.location.hash);
+  if (hash) {
+    if (hash.indexOf("#") === -1) {
+      hash = "#" + hash;
+    }
+    form.action = form.action + hash;
+  }
+  return true;
+}
+
 $(document).ready(setupAjaxIndicator);
 $(document).ready(hideOnLoad);
 $(document).ready(addFormObserversForDoubleSubmit);
 $(document).ready(defaultFocus);
+$(document).ready(setupTabs);

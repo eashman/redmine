@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -128,7 +128,7 @@ class Redmine::I18nTest < ActiveSupport::TestCase
       set_language_if_valid lang
       assert_nothing_raised "#{lang} failure" do
         size = number_to_human_size(257024)
-        assert_match /251/, size
+        assert_match /251/, size, "#{lang} failure"
       end
     end
   end
@@ -152,6 +152,11 @@ class Redmine::I18nTest < ActiveSupport::TestCase
         number_to_currency(-1000.2)
       end
     end
+  end
+
+  def test_l_hours_short
+    set_language_if_valid 'en'
+    assert_equal '2.00 h', l_hours_short(2.0)
   end
 
   def test_number_to_currency_default

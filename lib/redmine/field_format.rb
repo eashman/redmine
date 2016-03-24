@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -60,6 +60,10 @@ module Redmine
       # Set this to true if the format supports textual search on custom values
       class_attribute :searchable_supported
       self.searchable_supported = false
+
+      # Set this to true if field values can be summed up
+      class_attribute :totalable_supported
+      self.totalable_supported = false
 
       # Restricts the classes that the custom field can be added to
       # Set to nil for no restrictions
@@ -351,7 +355,7 @@ module Redmine
       self.form_partial = 'custom_fields/formats/link'
 
       def formatted_value(view, custom_field, value, customized=nil, html=false)
-        if html
+        if html && value.present?
           if custom_field.url_pattern.present?
             url = url_from_pattern(custom_field, value, customized)
           else
@@ -361,7 +365,7 @@ module Redmine
               url = "http://" + url
             end
           end
-          view.link_to value.to_s, url
+          view.link_to value.to_s.truncate(40), url
         else
           value.to_s
         end
@@ -370,12 +374,25 @@ module Redmine
 
     class Numeric < Unbounded
       self.form_partial = 'custom_fields/formats/numeric'
+      self.totalable_supported = true
 
       def order_statement(custom_field)
         # Make the database cast values into numeric
         # Postgresql will raise an error if a value can not be casted!
         # CustomValue validations should ensure that it doesn't occur
         "CAST(CASE #{join_alias custom_field}.value WHEN '' THEN '0' ELSE #{join_alias custom_field}.value END AS decimal(30,3))"
+      end
+
+      # Returns totals for the given scope
+      def total_for_scope(custom_field, scope)
+        scope.joins(:custom_values).
+          where(:custom_values => {:custom_field_id => custom_field.id}).
+          where.not(:custom_values => {:value => ''}).
+          sum("CAST(#{CustomValue.table_name}.value AS decimal(30,3))")
+      end
+
+      def cast_total_value(custom_field, value)
+        cast_single_value(custom_field, value)
       end
     end
 
@@ -410,6 +427,10 @@ module Redmine
 
       def cast_single_value(custom_field, value, customized=nil)
         value.to_f
+      end
+
+      def cast_total_value(custom_field, value)
+        value.to_f.round(2)
       end
 
       def validate_single_value(custom_field, value, customized=nil)
@@ -539,7 +560,7 @@ module Redmine
       add 'list'
       self.searchable_supported = true
       self.form_partial = 'custom_fields/formats/list'
- 
+
       def possible_custom_value_options(custom_value)
         options = possible_values_options(custom_value.custom_field)
         missing = [custom_value.value].flatten.reject(&:blank?) - options
@@ -636,7 +657,6 @@ module Redmine
         missing = [custom_value.value_was].flatten.reject(&:blank?) - options.map(&:last)
         if missing.any?
           options += target_class.where(:id => missing.map(&:to_i)).map {|o| [o.to_s, o.id.to_s]}
-          options.sort_by!(&:first)
         end
         options
       end
@@ -672,6 +692,32 @@ module Redmine
         join_alias(custom_field) + "_" + custom_field.field_format
       end
       protected :value_join_alias
+    end
+
+    class EnumerationFormat < RecordList
+      add 'enumeration'
+      self.form_partial = 'custom_fields/formats/enumeration'
+ 
+      def label
+        "label_field_format_enumeration"
+      end
+
+      def target_class
+        @target_class ||= CustomFieldEnumeration
+      end
+
+      def possible_values_options(custom_field, object=nil)
+        possible_values_records(custom_field, object).map {|u| [u.name, u.id.to_s]}
+      end
+
+      def possible_values_records(custom_field, object=nil)
+        custom_field.enumerations.active
+      end
+
+      def value_from_keyword(custom_field, keyword, object)
+        value = custom_field.enumerations.where("LOWER(name) LIKE LOWER(?)", keyword)
+        value ? value.id : nil
+      end
     end
 
     class UserFormat < RecordList

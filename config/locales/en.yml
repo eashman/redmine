@@ -142,10 +142,11 @@ en:
   general_csv_decimal_separator: '.'
   general_csv_encoding: ISO-8859-1
   general_pdf_fontname: freesans
+  general_pdf_monospaced_fontname: freemono
   general_first_day_of_week: '7'
 
   notice_account_updated: Account was successfully updated.
-  notice_account_invalid_creditentials: Invalid user or password
+  notice_account_invalid_credentials: Invalid user or password
   notice_account_password_updated: Password was successfully updated.
   notice_account_wrong_password: Wrong password
   notice_account_register_done: Account was successfully created. An email containing the instructions to activate your account was sent to %{email}.
@@ -210,6 +211,8 @@ en:
   error_invalid_file_encoding: "The file is not a valid %{encoding} encoded file"
   error_invalid_csv_file_or_settings: "The file is not a CSV file or does not match the settings below"
   error_can_not_read_import_file: "An error occurred while reading the file to import"
+  error_attachment_extension_not_allowed: "Attachment extension %{extension} is not allowed"
+  error_ldap_bind_credentials: "Invalid LDAP Account/Password"
 
   mail_subject_lost_password: "Your %{value} password"
   mail_body_lost_password: 'To change your password, click on the following link:'
@@ -225,6 +228,14 @@ en:
   mail_body_wiki_content_added: "The '%{id}' wiki page has been added by %{author}."
   mail_subject_wiki_content_updated: "'%{id}' wiki page has been updated"
   mail_body_wiki_content_updated: "The '%{id}' wiki page has been updated by %{author}."
+  mail_subject_security_notification: "Security notification"
+  mail_body_security_notification_change: "%{field} was changed."
+  mail_body_security_notification_change_to: "%{field} was changed to %{value}."
+  mail_body_security_notification_add: "%{field} %{value} was added."
+  mail_body_security_notification_remove: "%{field} %{value} was removed."
+  mail_body_security_notification_notify_enabled: "Email address %{value} now receives notifications."
+  mail_body_security_notification_notify_disabled: "Email address %{value} no longer receives notifications."
+  mail_body_settings_updated: "The following settings were changed:"
 
   field_name: Name
   field_description: Description
@@ -348,6 +359,8 @@ en:
   field_users_visibility: Users visibility
   field_time_entries_visibility: Time logs visibility
   field_total_estimated_hours: Total estimated time
+  field_default_version: Default version
+  field_remote_ip: IP address
 
   setting_app_title: Application title
   setting_app_subtitle: Application subtitle
@@ -386,7 +399,8 @@ en:
   setting_enabled_scm: Enabled SCM
   setting_mail_handler_body_delimiters: "Truncate emails after one of these lines"
   setting_mail_handler_api_enabled: Enable WS for incoming emails
-  setting_mail_handler_api_key: API key
+  setting_mail_handler_api_key: Incoming email WS API key
+  setting_sys_api_key: Repository management WS API key
   setting_sequential_project_identifiers: Generate sequential project identifiers
   setting_gravatar_enabled: Use Gravatar user icons
   setting_gravatar_default: Default Gravatar image
@@ -396,6 +410,7 @@ en:
   setting_openid: Allow OpenID login and registration
   setting_password_max_age: Require password change after
   setting_password_min_length: Minimum password length
+  setting_lost_password: Allow password reset via email
   setting_new_project_user_role_id: Role given to a non-admin user who creates a project
   setting_default_projects_modules: Default enabled modules for new projects
   setting_issue_done_ratio: Calculate the issue done ratio with
@@ -425,6 +440,8 @@ en:
   setting_link_copied_issue: Link issues on copy
   setting_max_additional_emails: Maximum number of additional email addresses
   setting_search_results_per_page: Search results per page
+  setting_attachment_extensions_allowed: Allowed extensions
+  setting_attachment_extensions_denied: Disallowed extensions
 
   permission_add_project: Create project
   permission_add_subprojects: Create subprojects
@@ -572,6 +589,7 @@ en:
   label_logout: Sign out
   label_help: Help
   label_reported_issues: Reported issues
+  label_assigned_issues: Assigned issues
   label_assigned_to_me_issues: Issues assigned to me
   label_last_login: Last connection
   label_registered_on: Registered on
@@ -629,10 +647,6 @@ en:
   label_open_issues_plural: open
   label_closed_issues: closed
   label_closed_issues_plural: closed
-  label_x_open_issues_abbr_on_total:
-    zero:  0 open / %{total}
-    one:   1 open / %{total}
-    other: "%{count} open / %{total}"
   label_x_open_issues_abbr:
     zero:  0 open
     one:   1 open
@@ -711,6 +725,8 @@ en:
   label_any_issues_in_project: any issues in project
   label_any_issues_not_in_project: any issues not in project
   label_no_issues_in_project: no issues in project
+  label_any_open_issues: any open issues
+  label_no_open_issues: no open issues
   label_day_plural: days
   label_repository: Repository
   label_repository_new: New repository
@@ -760,6 +776,7 @@ en:
   label_overall_spent_time: Overall spent time
   label_f_hour: "%{value} hour"
   label_f_hour_plural: "%{value} hours"
+  label_f_hour_short: "%{value} h"
   label_time_tracking: Time tracking
   label_change_plural: Changes
   label_statistics: Statistics
@@ -787,10 +804,6 @@ en:
   label_follows: Follows
   label_copied_to: Copied to
   label_copied_from: Copied from
-  label_end_to_start: end to start
-  label_end_to_end: end to end
-  label_start_to_start: start to start
-  label_start_to_end: start to end
   label_stay_logged_in: Stay logged in
   label_disabled: disabled
   label_show_completed_versions: Show completed versions
@@ -965,14 +978,16 @@ en:
   label_fields_separator: Field separator
   label_fields_wrapper: Field wrapper
   label_encoding: Encoding
-  label_coma_char: Coma
-  label_semi_colon_char: Semi colon
+  label_comma_char: Comma
+  label_semi_colon_char: Semicolon
   label_quote_char: Quote
   label_double_quote_char: Double quote
   label_fields_mapping: Fields mapping
   label_file_content_preview: File content preview
   label_create_missing_values: Create missing values
   label_api: API
+  label_field_format_enumeration: Key/value list
+  label_default_values_for_new_users: Default values for new users
 
   button_login: Login
   button_submit: Submit
@@ -1091,7 +1106,7 @@ en:
   text_assign_time_entries_to_project: Assign reported hours to the project
   text_reassign_time_entries: 'Reassign reported hours to this issue:'
   text_user_wrote: "%{value} wrote:"
-  text_enumeration_destroy_question: "%{count} objects are assigned to this value."
+  text_enumeration_destroy_question: "%{count} objects are assigned to the value “%{name}”."
   text_enumeration_category_reassign_to: 'Reassign them to this value:'
   text_email_delivery_not_configured: "Email delivery is not configured, and notifications are disabled.\nConfigure your SMTP server in config/configuration.yml and restart the application to enable them."
   text_repository_usernames_mapping: "Select or update the Redmine user mapped to each username found in the repository log.\nUsers with the same Redmine and repository username or email are automatically mapped."

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -80,7 +80,7 @@ class QueryCustomFieldColumn < QueryColumn
     self.name = "cf_#{custom_field.id}".to_sym
     self.sortable = custom_field.order_statement || false
     self.groupable = custom_field.group_statement || false
-    self.totalable = ['int', 'float'].include?(custom_field.field_format)
+    self.totalable = custom_field.totalable?
     @inline = true
     @cf = custom_field
   end
@@ -203,7 +203,9 @@ class Query < ActiveRecord::Base
     "!~"  => :label_not_contains,
     "=p"  => :label_any_issues_in_project,
     "=!p" => :label_any_issues_not_in_project,
-    "!p"  => :label_no_issues_in_project
+    "!p"  => :label_no_issues_in_project,
+    "*o"  => :label_any_open_issues,
+    "!o"  => :label_no_open_issues
   }
 
   class_attribute :operators_by_filter_type
@@ -218,7 +220,7 @@ class Query < ActiveRecord::Base
     :text => [  "~", "!~", "!*", "*" ],
     :integer => [ "=", ">=", "<=", "><", "!*", "*" ],
     :float => [ "=", ">=", "<=", "><", "!*", "*" ],
-    :relation => ["=", "=p", "=!p", "!p", "!*", "*"],
+    :relation => ["=", "=p", "=!p", "!p", "*o", "!o", "!*", "*"],
     :tree => ["=", "~", "!*", "*"]
   }
 
@@ -281,7 +283,7 @@ class Query < ActiveRecord::Base
           # filter requires one or more values
           (values_for(field) and !values_for(field).first.blank?) or
           # filter doesn't require any value
-          ["o", "c", "!*", "*", "t", "ld", "w", "lw", "l2w", "m", "lm", "y"].include? operator_for(field)
+          ["o", "c", "!*", "*", "t", "ld", "w", "lw", "l2w", "m", "lm", "y", "*o", "!o"].include? operator_for(field)
     end if filters
   end
 
@@ -311,7 +313,14 @@ class Query < ActiveRecord::Base
   def available_filters_as_json
     json = {}
     available_filters.each do |field, options|
-      json[field] = options.slice(:type, :name, :values).stringify_keys
+      options = options.slice(:type, :name, :values)
+      if options[:values] && values_for(field)
+        missing = Array(values_for(field)).select(&:present?) - options[:values].map(&:last)
+        if missing.any? && respond_to?(method = "find_#{field}_filter_values")
+          options[:values] += send(method, missing)
+        end
+      end
+      json[field] = options.stringify_keys
     end
     json
   end
@@ -558,22 +567,24 @@ class Query < ActiveRecord::Base
   def project_statement
     project_clauses = []
     if project && !project.descendants.active.empty?
-      ids = [project.id]
       if has_filter?("subproject_id")
         case operator_for("subproject_id")
         when '='
           # include the selected subprojects
-          ids += values_for("subproject_id").each(&:to_i)
+          ids = [project.id] + values_for("subproject_id").each(&:to_i)
+          project_clauses << "#{Project.table_name}.id IN (%s)" % ids.join(',')
         when '!*'
           # main project only
+          project_clauses << "#{Project.table_name}.id = %d" % project.id
         else
           # all subprojects
-          ids += project.descendants.collect(&:id)
+          project_clauses << "#{Project.table_name}.lft >= #{project.lft} AND #{Project.table_name}.rgt <= #{project.rgt}"
         end
       elsif Setting.display_subprojects_issues?
-        ids += project.descendants.collect(&:id)
+        project_clauses << "#{Project.table_name}.lft >= #{project.lft} AND #{Project.table_name}.rgt <= #{project.rgt}"
+      else
+        project_clauses << "#{Project.table_name}.id = %d" % project.id
       end
-      project_clauses << "#{Project.table_name}.id IN (%s)" % ids.join(',')
     elsif project
       project_clauses << "#{Project.table_name}.id = %d" % project.id
     end
@@ -683,7 +694,7 @@ class Query < ActiveRecord::Base
     end
     if column.is_a?(QueryCustomFieldColumn)
       custom_field = column.custom_field
-      send "total_for_#{custom_field.field_format}_custom_field", custom_field, scope
+      send "total_for_custom_field", custom_field, scope
     else
       send "total_for_#{column.name}", scope
     end
@@ -701,21 +712,9 @@ class Query < ActiveRecord::Base
       group(group_by_statement)
   end
 
-  def total_for_float_custom_field(custom_field, scope)
-    total_for_custom_field(custom_field, scope) {|t| t.to_f.round(2)}
-  end
-
-  def total_for_int_custom_field(custom_field, scope)
-    total_for_custom_field(custom_field, scope) {|t| t.to_i}
-  end
-
   def total_for_custom_field(custom_field, scope, &block)
-    total = scope.joins(:custom_values).
-      where(:custom_values => {:custom_field_id => custom_field.id}).
-      where.not(:custom_values => {:value => ''}).
-      sum("CAST(#{CustomValue.table_name}.value AS decimal(30,3))")
-
-    total = map_total(total, &block) if block_given?
+    total = custom_field.format.total_for_scope(custom_field, scope)
+    total = map_total(total) {|t| custom_field.format.cast_total_value(custom_field, t)}
     total
   end
 

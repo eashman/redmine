@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -281,6 +281,32 @@ class IssuesControllerTest < ActionController::TestCase
     assert_not_nil assigns(:issue_count_by_group)
   end
 
+  def test_index_with_query_grouped_by_key_value_custom_field
+    cf = IssueCustomField.create!(:name => 'Key', :is_for_all => true, :tracker_ids => [1,2,3], :field_format => 'enumeration')
+    cf.enumerations << valueb = CustomFieldEnumeration.new(:name => 'Value B', :position => 1)
+    cf.enumerations << valuea = CustomFieldEnumeration.new(:name => 'Value A', :position => 2)
+    CustomValue.create!(:custom_field => cf, :customized => Issue.find(1), :value => valueb.id)
+    CustomValue.create!(:custom_field => cf, :customized => Issue.find(2), :value => valueb.id)
+    CustomValue.create!(:custom_field => cf, :customized => Issue.find(3), :value => valuea.id)
+    CustomValue.create!(:custom_field => cf, :customized => Issue.find(5), :value => '')
+
+    get :index, :project_id => 1, :set_filter => 1, :group_by => "cf_#{cf.id}"
+    assert_response :success
+    assert_template 'index'
+    assert_not_nil assigns(:issues)
+    assert_not_nil assigns(:issue_count_by_group)
+
+    assert_select 'tr.group', 3
+    assert_select 'tr.group' do
+      assert_select 'span.name', :text => 'Value B'
+      assert_select 'span.count', :text => '2'
+    end
+    assert_select 'tr.group' do
+      assert_select 'span.name', :text => 'Value A'
+      assert_select 'span.count', :text => '1'
+    end
+  end
+
   def test_index_with_query_grouped_by_user_custom_field
     cf = IssueCustomField.create!(:name => 'User', :is_for_all => true, :tracker_ids => [1,2,3], :field_format => 'user')
     CustomValue.create!(:custom_field => cf, :customized => Issue.find(1), :value => '2')
@@ -428,6 +454,26 @@ class IssuesControllerTest < ActionController::TestCase
     end
   end
 
+  def test_index_should_include_query_params_as_hidden_fields_in_csv_export_form
+    get :index, :project_id => 1, :set_filter => "1", :tracker_id => "2", :sort => 'status', :c => ["status", "priority"]
+
+    assert_select '#csv-export-form[action=?]', '/projects/ecookbook/issues.csv'
+    assert_select '#csv-export-form[method=?]', 'get'
+
+    assert_select '#csv-export-form' do
+      assert_select 'input[name=?][value=?]', 'set_filter', '1'
+
+      assert_select 'input[name=?][value=?]', 'f[]', 'tracker_id'
+      assert_select 'input[name=?][value=?]', 'op[tracker_id]', '='
+      assert_select 'input[name=?][value=?]', 'v[tracker_id][]', '2'
+
+      assert_select 'input[name=?][value=?]', 'c[]', 'status'
+      assert_select 'input[name=?][value=?]', 'c[]', 'priority'
+
+      assert_select 'input[name=?][value=?]', 'sort', 'status'
+    end
+  end
+
   def test_index_csv
     get :index, :format => 'csv'
     assert_response :success
@@ -449,7 +495,7 @@ class IssuesControllerTest < ActionController::TestCase
     Issue.generate!(:description => 'test_index_csv_with_description')
 
     with_settings :default_language => 'en' do
-      get :index, :format => 'csv', :description => '1'
+      get :index, :format => 'csv', :csv => {:description => '1'}
       assert_response :success
       assert_not_nil assigns(:issues)
     end
@@ -472,7 +518,7 @@ class IssuesControllerTest < ActionController::TestCase
   end
 
   def test_index_csv_with_all_columns
-    get :index, :format => 'csv', :columns => 'all'
+    get :index, :format => 'csv', :csv => {:columns => 'all'}
     assert_response :success
     assert_not_nil assigns(:issues)
     assert_equal 'text/csv; header=present', @response.content_type
@@ -487,7 +533,7 @@ class IssuesControllerTest < ActionController::TestCase
     issue.custom_field_values = {1 => ['MySQL', 'Oracle']}
     issue.save!
 
-    get :index, :format => 'csv', :columns => 'all'
+    get :index, :format => 'csv', :csv => {:columns => 'all'}
     assert_response :success
     lines = @response.body.chomp.split("\n")
     assert lines.detect {|line| line.include?('"MySQL, Oracle"')}
@@ -498,14 +544,14 @@ class IssuesControllerTest < ActionController::TestCase
     issue = Issue.generate!(:project_id => 1, :tracker_id => 1, :custom_field_values => {field.id => '185.6'})
 
     with_settings :default_language => 'fr' do
-      get :index, :format => 'csv', :columns => 'all'
+      get :index, :format => 'csv', :csv => {:columns => 'all'}
       assert_response :success
       issue_line = response.body.chomp.split("\n").map {|line| line.split(';')}.detect {|line| line[0]==issue.id.to_s}
       assert_include '185,60', issue_line
     end
 
     with_settings :default_language => 'en' do
-      get :index, :format => 'csv', :columns => 'all'
+      get :index, :format => 'csv', :csv => {:columns => 'all'}
       assert_response :success
       issue_line = response.body.chomp.split("\n").map {|line| line.split(',')}.detect {|line| line[0]==issue.id.to_s}
       assert_include '185.60', issue_line
@@ -538,9 +584,9 @@ class IssuesControllerTest < ActionController::TestCase
       lines = @response.body.chomp.split("\n")
       header = lines[0]
       status = "\xaa\xac\xbaA".force_encoding('Big5')
-      assert header.include?(status)
+      assert_include status, header
       issue_line = lines.find {|l| l =~ /^#{issue.id},/}
-      assert issue_line.include?(str_big5)
+      assert_include str_big5, issue_line
     end
   end
 
@@ -1377,6 +1423,33 @@ class IssuesControllerTest < ActionController::TestCase
     end
   end
 
+  def test_show_should_display_prev_next_links_when_request_has_previous_and_next_issue_ids_params
+    get :show, :id => 1, :prev_issue_id => 1, :next_issue_id => 3, :issue_position => 2, :issue_count => 4
+    assert_response :success
+
+    assert_select 'div.next-prev-links' do
+      assert_select 'a[href="/issues/1"]', :text => /Previous/
+      assert_select 'a[href="/issues/3"]', :text => /Next/
+      assert_select 'span.position', :text => "2 of 4"
+    end
+  end
+
+  def test_show_should_display_category_field_if_categories_are_defined
+    Issue.update_all :category_id => nil
+
+    get :show, :id => 1
+    assert_response :success
+    assert_select '.attributes .category'
+  end
+
+  def test_show_should_not_display_category_field_if_no_categories_are_defined
+    Project.find(1).issue_categories.delete_all
+
+    get :show, :id => 1
+    assert_response :success
+    assert_select 'table.attributes .category', 0
+  end
+
   def test_show_should_display_link_to_the_assignee
     get :show, :id => 2
     assert_response :success
@@ -1408,7 +1481,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_select 'div#watchers ul' do
       assert_select 'li' do
         assert_select 'a[href="/users/2"]'
-        assert_select 'a img[alt=Delete]'
+        assert_select 'a[class*=delete]'
       end
     end
   end
@@ -1425,7 +1498,7 @@ class IssuesControllerTest < ActionController::TestCase
       assert_select 'li' do
         assert_select 'img.gravatar'
         assert_select 'a[href="/users/2"]'
-        assert_select 'a img[alt=Delete]'
+        assert_select 'a[class*=delete]'
       end
     end
   end
@@ -1466,7 +1539,7 @@ class IssuesControllerTest < ActionController::TestCase
     get :show, :id => 1
     assert_response :success
 
-    assert_select 'td', :text => 'MySQL, Oracle'
+    assert_select ".cf_1 .value", :text => 'MySQL, Oracle'
   end
 
   def test_show_with_multi_user_custom_field
@@ -1479,7 +1552,7 @@ class IssuesControllerTest < ActionController::TestCase
     get :show, :id => 1
     assert_response :success
 
-    assert_select "td.cf_#{field.id}", :text => 'Dave Lopper, John Smith' do
+    assert_select ".cf_#{field.id} .value", :text => 'Dave Lopper, John Smith' do
       assert_select 'a', :text => 'Dave Lopper'
       assert_select 'a', :text => 'John Smith'
     end
@@ -1696,6 +1769,19 @@ class IssuesControllerTest < ActionController::TestCase
       assert_select 'option[value="2"]'
       assert_select 'option', 1
       assert_select 'option[value="2"][selected=selected]'
+    end
+  end
+
+  def test_new_should_preselect_default_version
+    version = Version.generate!(:project_id => 1)
+    Project.find(1).update_attribute :default_version_id, version.id
+    @request.session[:user_id] = 2
+
+    get :new, :project_id => 1
+    assert_response :success
+    assert_equal version, assigns(:issue).fixed_version
+    assert_select 'select[name=?]', 'issue[fixed_version_id]' do
+      assert_select 'option[value=?][selected=selected]', version.id.to_s
     end
   end
 
@@ -1951,6 +2037,22 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal 2, assigns(:issue).status_id
   end
 
+  def test_update_form_for_new_issue_should_ignore_version_when_changing_project
+    version = Version.generate!(:project_id => 1)
+    Project.find(1).update_attribute :default_version_id, version.id
+    @request.session[:user_id] = 2
+
+    xhr :post, :new, :issue => {:project_id => 1,
+                                :fixed_version_id => ''},
+                     :form_update_triggered_by => 'issue_project_id'
+    assert_response :success
+    assert_template 'new'
+
+    issue = assigns(:issue)
+    assert_equal 1, issue.project_id
+    assert_equal version, issue.fixed_version
+  end
+
   def test_post_create
     @request.session[:user_id] = 2
     assert_difference 'Issue.count' do
@@ -2166,6 +2268,31 @@ class IssuesControllerTest < ActionController::TestCase
     end
 
     assert_select_error /Due date cannot be blank/i
+    assert_select_error /Bar cannot be blank/i
+  end
+
+  def test_create_should_validate_required_list_fields
+    cf1 = IssueCustomField.create!(:name => 'Foo', :field_format => 'list', :is_for_all => true, :tracker_ids => [1, 2], :multiple => false, :possible_values => ['a', 'b'])
+    cf2 = IssueCustomField.create!(:name => 'Bar', :field_format => 'list', :is_for_all => true, :tracker_ids => [1, 2], :multiple => true, :possible_values => ['a', 'b'])
+    WorkflowPermission.delete_all
+    WorkflowPermission.create!(:old_status_id => 1, :tracker_id => 2, :role_id => 1, :field_name => cf1.id.to_s, :rule => 'required')
+    WorkflowPermission.create!(:old_status_id => 1, :tracker_id => 2, :role_id => 1, :field_name => cf2.id.to_s, :rule => 'required')
+    @request.session[:user_id] = 2
+
+    assert_no_difference 'Issue.count' do
+      post :create, :project_id => 1, :issue => {
+        :tracker_id => 2,
+        :status_id => 1,
+        :subject => 'Test',
+        :start_date => '',
+        :due_date => '',
+        :custom_field_values => {cf1.id.to_s => '', cf2.id.to_s => ['']}
+      }
+      assert_response :success
+      assert_template 'new'
+    end
+
+    assert_select_error /Foo cannot be blank/i
     assert_select_error /Bar cannot be blank/i
   end
 
@@ -2705,6 +2832,14 @@ class IssuesControllerTest < ActionController::TestCase
     assert_select 'input[name=copy_attachments]', 0
   end
 
+  def test_new_as_copy_should_preserve_parent_id
+    @request.session[:user_id] = 2
+    issue = Issue.generate!(:parent_issue_id => 2)
+    get :new, :project_id => 1, :copy_from => issue.id
+
+    assert_select 'input[name=?][value="2"]', 'issue[parent_issue_id]'
+  end
+
   def test_new_as_copy_with_subtasks_should_show_copy_subtasks_checkbox
     @request.session[:user_id] = 2
     issue = Issue.generate_with_descendants!
@@ -3053,6 +3188,22 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal 2, issue.project_id
     assert_equal 2, issue.tracker_id
     assert_equal 'This is the test_new issue', issue.subject
+  end
+
+  def test_update_form_should_keep_category_with_same_when_changing_project
+    source = Project.generate!
+    target = Project.generate!
+    source_category = IssueCategory.create!(:name => 'Foo', :project => source)
+    target_category = IssueCategory.create!(:name => 'Foo', :project => target)
+    issue = Issue.generate!(:project => source, :category => source_category)
+
+    @request.session[:user_id] = 1
+    patch :edit, :id => issue.id,
+      :issue => {:project_id => target.id, :category_id => source_category.id}
+    assert_response :success
+
+    issue = assigns(:issue)
+    assert_equal target_category, issue.category
   end
 
   def test_update_form_should_propose_default_status_for_existing_issue
@@ -3541,6 +3692,19 @@ class IssuesControllerTest < ActionController::TestCase
     assert_response :redirect
     assert_redirected_to :controller => 'issues', :action => 'show', :id => issue.id
   end
+ 
+  def test_put_update_should_redirect_with_previous_and_next_issue_ids_params
+    @request.session[:user_id] = 2
+
+    put :update, :id => 11,
+      :issue => {:status_id => 6, :notes => 'Notes'},
+      :prev_issue_id => 8,
+      :next_issue_id => 12,
+      :issue_position => 2,
+      :issue_count => 3
+
+    assert_redirected_to '/issues/11?issue_count=3&issue_position=2&next_issue_id=12&prev_issue_id=8'
+  end
 
   def test_get_bulk_edit
     @request.session[:user_id] = 2
@@ -3728,13 +3892,15 @@ class IssuesControllerTest < ActionController::TestCase
 
     @request.session[:user_id] = 2
     # update issues assignee
-    post :bulk_update, :ids => [1, 2], :notes => 'Bulk editing',
-                                     :issue => {:priority_id => '',
-                                                :assigned_to_id => group.id,
-                                                :custom_field_values => {'2' => ''}}
-
-    assert_response 302
-    assert_equal [group, group], Issue.where(:id => [1, 2]).collect {|i| i.assigned_to}
+    with_settings :issue_group_assignment => '1' do
+      post :bulk_update, :ids => [1, 2], :notes => 'Bulk editing',
+                                       :issue => {:priority_id => '',
+                                                  :assigned_to_id => group.id,
+                                                  :custom_field_values => {'2' => ''}}
+  
+      assert_response 302
+      assert_equal [group, group], Issue.where(:id => [1, 2]).collect {|i| i.assigned_to}
+    end
   end
 
   def test_bulk_update_on_different_projects
@@ -4118,7 +4284,7 @@ class IssuesControllerTest < ActionController::TestCase
       assert_no_difference 'Project.find(1).issues.count' do
         post :bulk_update, :ids => [1, 2], :copy => '1', 
              :issue => {
-               :project_id => '2', :tracker_id => '', :assigned_to_id => '4',
+               :project_id => '2', :tracker_id => '', :assigned_to_id => '2',
                :status_id => '1', :start_date => '2009-12-01', :due_date => '2009-12-31'
              }
       end
@@ -4128,7 +4294,7 @@ class IssuesControllerTest < ActionController::TestCase
     assert_equal 2, copied_issues.size
     copied_issues.each do |issue|
       assert_equal 2, issue.project_id, "Project is incorrect"
-      assert_equal 4, issue.assigned_to_id, "Assigned to is incorrect"
+      assert_equal 2, issue.assigned_to_id, "Assigned to is incorrect"
       assert_equal 1, issue.status_id, "Status is incorrect"
       assert_equal '2009-12-01', issue.start_date.to_s, "Start date is incorrect"
       assert_equal '2009-12-31', issue.due_date.to_s, "Due date is incorrect"

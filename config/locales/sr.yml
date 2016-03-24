@@ -143,10 +143,11 @@ sr:
   general_csv_decimal_separator: '.'
   general_csv_encoding: UTF-8
   general_pdf_fontname: freesans
+  general_pdf_monospaced_fontname: freemono
   general_first_day_of_week: '1'
 
   notice_account_updated: Налог је успешно ажуриран.
-  notice_account_invalid_creditentials: Неисправно корисничко име или лозинка.
+  notice_account_invalid_credentials: Неисправно корисничко име или лозинка.
   notice_account_password_updated: Лозинка је успешно ажурирана.
   notice_account_wrong_password: Погрешна лозинка
   notice_account_register_done: Кориснички налог је успешно креиран. Кликните на линк који сте добили у е-поруци за активацију.
@@ -536,10 +537,6 @@ sr:
   label_open_issues_plural: отворених
   label_closed_issues: затворен
   label_closed_issues_plural: затворених
-  label_x_open_issues_abbr_on_total:
-    zero:  0 отворених / %{total}
-    one:   1 отворен / %{total}
-    other: "%{count} отворених / %{total}"
   label_x_open_issues_abbr:
     zero:  0 отворених
     one:   1 отворен
@@ -674,10 +671,6 @@ sr:
   label_blocked_by: одбијених од
   label_precedes: претходи
   label_follows: праћених
-  label_end_to_start: од краја до почетка
-  label_end_to_end: од краја до краја
-  label_start_to_start: од почетка до почетка
-  label_start_to_end: од почетка до краја
   label_stay_logged_in: Останите пријављени
   label_disabled: онемогућено
   label_show_completed_versions: Приказивање завршене верзије
@@ -1169,8 +1162,8 @@ sr:
   label_fields_separator: Field separator
   label_fields_wrapper: Field wrapper
   label_encoding: Encoding
-  label_coma_char: Coma
-  label_semi_colon_char: Semi colon
+  label_comma_char: Comma
+  label_semi_colon_char: Semicolon
   label_quote_char: Quote
   label_double_quote_char: Double quote
   label_fields_mapping: Fields mapping
@@ -1180,3 +1173,27 @@ sr:
   field_total_estimated_hours: Total estimated time
   label_api: API
   label_total_plural: Totals
+  label_assigned_issues: Assigned issues
+  label_field_format_enumeration: Key/value list
+  label_f_hour_short: '%{value} h'
+  field_default_version: Default version
+  error_attachment_extension_not_allowed: Attachment extension %{extension} is not allowed
+  setting_attachment_extensions_allowed: Allowed extensions
+  setting_attachment_extensions_denied: Disallowed extensions
+  label_any_open_issues: any open issues
+  label_no_open_issues: no open issues
+  label_default_values_for_new_users: Default values for new users
+  error_ldap_bind_credentials: Invalid LDAP Account/Password
+  setting_sys_api_key: API кључ
+  setting_lost_password: Изгубљена лозинка
+  mail_subject_security_notification: Security notification
+  mail_body_security_notification_change: ! '%{field} was changed.'
+  mail_body_security_notification_change_to: ! '%{field} was changed to %{value}.'
+  mail_body_security_notification_add: ! '%{field} %{value} was added.'
+  mail_body_security_notification_remove: ! '%{field} %{value} was removed.'
+  mail_body_security_notification_notify_enabled: Email address %{value} now receives
+    notifications.
+  mail_body_security_notification_notify_disabled: Email address %{value} no longer
+    receives notifications.
+  mail_body_settings_updated: ! 'The following settings were changed:'
+  field_remote_ip: IP address

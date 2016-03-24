@@ -143,10 +143,11 @@ el:
   general_csv_decimal_separator: '.'
   general_csv_encoding: UTF-8
   general_pdf_fontname: freesans
+  general_pdf_monospaced_fontname: freemono
   general_first_day_of_week: '7'
 
   notice_account_updated: Ο λογαριασμός ενημερώθηκε επιτυχώς.
-  notice_account_invalid_creditentials: Άκυρο όνομα χρήστη ή κωδικού πρόσβασης
+  notice_account_invalid_credentials: Άκυρο όνομα χρήστη ή κωδικού πρόσβασης
   notice_account_password_updated: Ο κωδικός πρόσβασης ενημερώθηκε επιτυχώς.
   notice_account_wrong_password: Λάθος κωδικός πρόσβασης
   notice_account_register_done: Ο λογαριασμός δημιουργήθηκε επιτυχώς. Για να ενεργοποιήσετε το λογαριασμό σας, πατήστε το σύνδεσμο που σας έχει αποσταλεί με email.
@@ -501,10 +502,6 @@ el:
   label_open_issues_plural: Ανοικτά
   label_closed_issues: Κλειστό
   label_closed_issues_plural: Κλειστά
-  label_x_open_issues_abbr_on_total:
-    zero:  0 ανοικτά / %{total}
-    one:   1 ανοικτό / %{total}
-    other: "%{count} ανοικτά / %{total}"
   label_x_open_issues_abbr:
     zero:  0 ανοικτά
     one:   1 ανοικτό
@@ -637,10 +634,6 @@ el:
   label_blocked_by: φραγή από τον
   label_precedes: προηγείται
   label_follows: ακολουθεί
-  label_end_to_start: από το τέλος στην αρχή
-  label_end_to_end: από το τέλος στο τέλος
-  label_start_to_start: από την αρχή στην αρχή
-  label_start_to_end: από την αρχή στο τέλος
   label_stay_logged_in: Παραμονή σύνδεσης
   label_disabled: απενεργοποιημένη
   label_show_completed_versions: Προβολή ολοκληρωμένων εκδόσεων
@@ -1168,8 +1161,8 @@ el:
   label_fields_separator: Field separator
   label_fields_wrapper: Field wrapper
   label_encoding: Encoding
-  label_coma_char: Coma
-  label_semi_colon_char: Semi colon
+  label_comma_char: Comma
+  label_semi_colon_char: Semicolon
   label_quote_char: Quote
   label_double_quote_char: Double quote
   label_fields_mapping: Fields mapping
@@ -1179,3 +1172,27 @@ el:
   field_total_estimated_hours: Total estimated time
   label_api: API
   label_total_plural: Totals
+  label_assigned_issues: Assigned issues
+  label_field_format_enumeration: Key/value list
+  label_f_hour_short: '%{value} h'
+  field_default_version: Default version
+  error_attachment_extension_not_allowed: Attachment extension %{extension} is not allowed
+  setting_attachment_extensions_allowed: Allowed extensions
+  setting_attachment_extensions_denied: Disallowed extensions
+  label_any_open_issues: any open issues
+  label_no_open_issues: no open issues
+  label_default_values_for_new_users: Default values for new users
+  error_ldap_bind_credentials: Invalid LDAP Account/Password
+  setting_sys_api_key: κλειδί API
+  setting_lost_password: Ανάκτηση κωδικού πρόσβασης
+  mail_subject_security_notification: Security notification
+  mail_body_security_notification_change: ! '%{field} was changed.'
+  mail_body_security_notification_change_to: ! '%{field} was changed to %{value}.'
+  mail_body_security_notification_add: ! '%{field} %{value} was added.'
+  mail_body_security_notification_remove: ! '%{field} %{value} was removed.'
+  mail_body_security_notification_notify_enabled: Email address %{value} now receives
+    notifications.
+  mail_body_security_notification_notify_disabled: Email address %{value} no longer
+    receives notifications.
+  mail_body_settings_updated: ! 'The following settings were changed:'
+  field_remote_ip: IP address

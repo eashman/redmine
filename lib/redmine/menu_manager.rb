@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -90,7 +90,7 @@ module Redmine
         menu_items_for(menu, project) do |node|
           links << render_menu_node(node, project)
         end
-        links.empty? ? nil : content_tag('ul', links.join("\n").html_safe)
+        links.empty? ? nil : content_tag('ul', links.join.html_safe)
       end
 
       def render_menu_node(node, project=nil)

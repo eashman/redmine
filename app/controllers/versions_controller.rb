@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ class VersionsController < ApplicationController
         @versions += @project.rolled_up_versions.visible if @with_subprojects
         @versions = @versions.uniq.sort
         unless params[:completed]
-          @completed_versions = @versions.select {|version| version.closed? || version.completed? }
+          @completed_versions = @versions.select(&:completed?)
           @versions -= @completed_versions
         end
 

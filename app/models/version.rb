@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,10 @@
 
 class Version < ActiveRecord::Base
   include Redmine::SafeAttributes
+
   after_update :update_issues_from_sharing_change
+  before_destroy :nullify_projects_default_version
+
   belongs_to :project
   has_many :fixed_issues, :class_name => 'Issue', :foreign_key => 'fixed_version_id', :dependent => :nullify
   acts_as_customizable
@@ -99,9 +102,9 @@ class Version < ActiveRecord::Base
     status == 'open'
   end
 
-  # Returns true if the version is completed: due date reached and no open issues
+  # Returns true if the version is completed: closed or due date reached and no open issues
   def completed?
-    effective_date && (effective_date < Date.today) && (open_issues_count == 0)
+    closed? || (effective_date && (effective_date < Date.today) && (open_issues_count == 0))
   end
 
   def behind_schedule?
@@ -192,6 +195,13 @@ class Version < ActiveRecord::Base
         name == version.name ? id <=> version.id : name <=> version.name
       end
     end
+  end
+
+  def css_classes
+    [
+      completed? ? 'version-completed' : 'version-incompleted',
+      "version-#{status}"
+    ].join(' ')
   end
 
   def self.fields_for_order_statement(table=nil)
@@ -296,5 +306,9 @@ class Version < ActiveRecord::Base
   def referenced_by_a_custom_field?
     CustomValue.joins(:custom_field).
       where(:value => id.to_s, :custom_fields => {:field_format => 'version'}).any?
+  end
+
+  def nullify_projects_default_version
+    Project.where(:default_version_id => id).update_all(:default_version_id => nil)
   end
 end

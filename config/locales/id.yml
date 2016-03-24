@@ -142,10 +142,11 @@ id:
   general_csv_decimal_separator: '.'
   general_csv_encoding: ISO-8859-1
   general_pdf_fontname: freesans
+  general_pdf_monospaced_fontname: freemono
   general_first_day_of_week: '7'
 
   notice_account_updated: Akun sudah berhasil diperbarui.
-  notice_account_invalid_creditentials: Pengguna atau kata sandi salah
+  notice_account_invalid_credentials: Pengguna atau kata sandi salah
   notice_account_password_updated: Kata sandi sudah berhasil diperbarui.
   notice_account_wrong_password: Kata sandi salah.
   notice_account_register_done: Akun sudah berhasil dibuat. Untuk mengaktifkan akun anda, silakan klik tautan (link) yang dikirim kepada anda melalui e-mail.
@@ -507,10 +508,6 @@ id:
   label_open_issues_plural: belum selesai
   label_closed_issues: selesai
   label_closed_issues_plural: selesai
-  label_x_open_issues_abbr_on_total:
-    zero:  0 belum selesai / %{total}
-    one:   1 belum selesai / %{total}
-    other: "%{count} terbuka / %{total}"
   label_x_open_issues_abbr:
     zero:  0 belum selesai
     one:   1 belum selesai
@@ -643,10 +640,6 @@ id:
   label_blocked_by: diblok oleh
   label_precedes: mendahului
   label_follows: mengikuti
-  label_end_to_start: akhir ke awal
-  label_end_to_end: akhir ke akhir
-  label_start_to_start: awal ke awal
-  label_start_to_end: awal ke akhir
   label_stay_logged_in: Tetap login
   label_disabled: tidak diaktifkan
   label_show_completed_versions: Tampilkan versi lengkap
@@ -1172,8 +1165,8 @@ id:
   label_fields_separator: Field separator
   label_fields_wrapper: Field wrapper
   label_encoding: Encoding
-  label_coma_char: Coma
-  label_semi_colon_char: Semi colon
+  label_comma_char: Comma
+  label_semi_colon_char: Semicolon
   label_quote_char: Quote
   label_double_quote_char: Double quote
   label_fields_mapping: Fields mapping
@@ -1183,3 +1176,27 @@ id:
   field_total_estimated_hours: Total estimated time
   label_api: API
   label_total_plural: Totals
+  label_assigned_issues: Assigned issues
+  label_field_format_enumeration: Key/value list
+  label_f_hour_short: '%{value} h'
+  field_default_version: Default version
+  error_attachment_extension_not_allowed: Attachment extension %{extension} is not allowed
+  setting_attachment_extensions_allowed: Allowed extensions
+  setting_attachment_extensions_denied: Disallowed extensions
+  label_any_open_issues: any open issues
+  label_no_open_issues: no open issues
+  label_default_values_for_new_users: Default values for new users
+  error_ldap_bind_credentials: Invalid LDAP Account/Password
+  setting_sys_api_key: API key
+  setting_lost_password: Lupa password
+  mail_subject_security_notification: Security notification
+  mail_body_security_notification_change: ! '%{field} was changed.'
+  mail_body_security_notification_change_to: ! '%{field} was changed to %{value}.'
+  mail_body_security_notification_add: ! '%{field} %{value} was added.'
+  mail_body_security_notification_remove: ! '%{field} %{value} was removed.'
+  mail_body_security_notification_notify_enabled: Email address %{value} now receives
+    notifications.
+  mail_body_security_notification_notify_disabled: Email address %{value} no longer
+    receives notifications.
+  mail_body_settings_updated: ! 'The following settings were changed:'
+  field_remote_ip: IP address

@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -78,7 +78,7 @@ class IssueSubtaskingTest < ActiveSupport::TestCase
     end
   end
 
-  def test_parent_priority_should_be_the_highest_child_priority
+  def test_parent_priority_should_be_the_highest_open_child_priority
     with_settings :parent_issue_priority => 'derived' do
       parent = Issue.generate!(:priority => IssuePriority.find_by_name('Normal'))
       # Create children
@@ -88,14 +88,23 @@ class IssueSubtaskingTest < ActiveSupport::TestCase
       assert_equal 'Immediate', child1.reload.priority.name
       assert_equal 'Immediate', parent.reload.priority.name
       child3 = parent.generate_child!(:priority => IssuePriority.find_by_name('Low'))
+      child4 = parent.generate_child!(:priority => IssuePriority.find_by_name('Urgent'))
       assert_equal 'Immediate', parent.reload.priority.name
       # Destroy a child
       child1.destroy
+      assert_equal 'Urgent', parent.reload.priority.name
+      # Close a child
+      child4.status = IssueStatus.where(:is_closed => true).first
+      child4.save!
       assert_equal 'Low', parent.reload.priority.name
       # Update a child
       child3.reload.priority = IssuePriority.find_by_name('Normal')
       child3.save!
       assert_equal 'Normal', parent.reload.priority.name
+      # Reopen a child
+      child4.status = IssueStatus.where(:is_closed => false).first
+      child4.save!
+      assert_equal 'Urgent', parent.reload.priority.name
     end
   end
 
@@ -182,6 +191,26 @@ class IssueSubtaskingTest < ActiveSupport::TestCase
       child.update_attributes(:parent_issue_id => second_parent.id)
       assert_equal 40,  first_parent.reload.done_ratio
       assert_equal 20, second_parent.reload.done_ratio
+    end
+  end
+
+  def test_done_ratio_of_parent_should_reflect_children
+    root = Issue.generate!
+    child1 = root.generate_child!
+    child2 = child1.generate_child!
+
+    assert_equal 0, root.done_ratio
+    assert_equal 0, child1.done_ratio
+    assert_equal 0, child2.done_ratio
+
+    with_settings :issue_done_ratio => 'issue_status' do
+      status = IssueStatus.find(4)
+      status.update_attribute :default_done_ratio, 50
+      child1.update_attribute :status, status
+
+      assert_equal 50, child1.done_ratio
+      root.reload
+      assert_equal 50, root.done_ratio
     end
   end
 

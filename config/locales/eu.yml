@@ -144,10 +144,11 @@ eu:
   general_csv_decimal_separator: '.'
   general_csv_encoding: UTF-8
   general_pdf_fontname: freesans
+  general_pdf_monospaced_fontname: freemono
   general_first_day_of_week: '1'
 
   notice_account_updated: Kontua ongi eguneratu da.
-  notice_account_invalid_creditentials: Erabiltzaile edo pasahitz ezegokia
+  notice_account_invalid_credentials: Erabiltzaile edo pasahitz ezegokia
   notice_account_password_updated: Pasahitza ongi eguneratu da.
   notice_account_wrong_password: Pasahitz ezegokia.
   notice_account_register_done: Kontua ongi sortu da. Kontua gaitzeko klikatu epostan adierazi zaizun estekan.
@@ -524,10 +525,6 @@ eu:
   label_open_issues_plural: irekiak
   label_closed_issues: itxita
   label_closed_issues_plural: itxiak
-  label_x_open_issues_abbr_on_total:
-    zero:  0 irekita / %{total}
-    one:   1 irekita / %{total}
-    other: "%{count} irekiak / %{total}"
   label_x_open_issues_abbr:
     zero:  0 irekita
     one:   1 irekita
@@ -661,10 +658,6 @@ eu:
   label_blocked_by: honek blokeatuta
   label_precedes: aurretik doa
   label_follows: jarraitzen du
-  label_end_to_start: bukaeratik hasierara
-  label_end_to_end: bukaeratik bukaerara
-  label_start_to_start: hasieratik hasierhasieratik bukaerara
-  label_start_to_end: hasieratik bukaerara
   label_stay_logged_in: Saioa mantendu
   label_disabled: ezgaituta
   label_show_completed_versions: Bukatutako bertsioak ikusi
@@ -1169,8 +1162,8 @@ eu:
   label_fields_separator: Field separator
   label_fields_wrapper: Field wrapper
   label_encoding: Encoding
-  label_coma_char: Coma
-  label_semi_colon_char: Semi colon
+  label_comma_char: Comma
+  label_semi_colon_char: Semicolon
   label_quote_char: Quote
   label_double_quote_char: Double quote
   label_fields_mapping: Fields mapping
@@ -1180,3 +1173,27 @@ eu:
   field_total_estimated_hours: Total estimated time
   label_api: API
   label_total_plural: Totals
+  label_assigned_issues: Assigned issues
+  label_field_format_enumeration: Key/value list
+  label_f_hour_short: '%{value} h'
+  field_default_version: Default version
+  error_attachment_extension_not_allowed: Attachment extension %{extension} is not allowed
+  setting_attachment_extensions_allowed: Allowed extensions
+  setting_attachment_extensions_denied: Disallowed extensions
+  label_any_open_issues: any open issues
+  label_no_open_issues: no open issues
+  label_default_values_for_new_users: Default values for new users
+  error_ldap_bind_credentials: Invalid LDAP Account/Password
+  setting_sys_api_key: API giltza
+  setting_lost_password: Pasahitza galduta
+  mail_subject_security_notification: Security notification
+  mail_body_security_notification_change: ! '%{field} was changed.'
+  mail_body_security_notification_change_to: ! '%{field} was changed to %{value}.'
+  mail_body_security_notification_add: ! '%{field} %{value} was added.'
+  mail_body_security_notification_remove: ! '%{field} %{value} was removed.'
+  mail_body_security_notification_notify_enabled: Email address %{value} now receives
+    notifications.
+  mail_body_security_notification_notify_disabled: Email address %{value} no longer
+    receives notifications.
+  mail_body_settings_updated: ! 'The following settings were changed:'
+  field_remote_ip: IP address

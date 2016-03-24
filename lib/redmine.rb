@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -60,6 +60,8 @@ require 'redmine/views/builders'
 
 require 'redmine/themes'
 require 'redmine/hook'
+require 'redmine/hook/listener'
+require 'redmine/hook/view_listener'
 require 'redmine/plugin'
 
 Redmine::Scm::Base.add "Subversion"
@@ -103,8 +105,8 @@ Redmine::AccessControl.map do |map|
     map.permission :set_issues_private, {}
     map.permission :set_own_issues_private, {}, :require => :loggedin
     map.permission :add_issue_notes, {:issues => [:edit, :update], :journals => [:new], :attachments => :upload}
-    map.permission :edit_issue_notes, {:journals => :edit}, :require => :loggedin
-    map.permission :edit_own_issue_notes, {:journals => :edit}, :require => :loggedin
+    map.permission :edit_issue_notes, {:journals => [:edit, :update]}, :require => :loggedin
+    map.permission :edit_own_issue_notes, {:journals => [:edit, :update]}, :require => :loggedin
     map.permission :view_private_notes, {}, :read => true, :require => :member
     map.permission :set_notes_private, {}, :require => :member
     map.permission :delete_issues, {:issues => :destroy}, :require => :member

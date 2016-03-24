@@ -1,5 +1,5 @@
 # Redmine - project management software
-# Copyright (C) 2006-2015  Jean-Philippe Lang
+# Copyright (C) 2006-2016  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -49,8 +49,11 @@ Rails.application.routes.draw do
   match '/issues/changes', :to => 'journals#index', :as => 'issue_changes', :via => :get
   match '/issues/:id/quoted', :to => 'journals#new', :id => /\d+/, :via => :post, :as => 'quoted_issue'
 
-  match '/journals/diff/:id', :to => 'journals#diff', :id => /\d+/, :via => :get
-  match '/journals/edit/:id', :to => 'journals#edit', :id => /\d+/, :via => [:get, :post]
+  resources :journals, :only => [:edit, :update] do
+    member do
+      get 'diff'
+    end
+  end
 
   get '/projects/:project_id/issues/gantt', :to => 'gantts#show', :as => 'project_gantt'
   get '/issues/gantt', :to => 'gantts#show'
@@ -72,9 +75,9 @@ Rails.application.routes.draw do
   match 'my/account/destroy', :controller => 'my', :action => 'destroy', :via => [:get, :post]
   match 'my/page', :controller => 'my', :action => 'page', :via => :get
   match 'my', :controller => 'my', :action => 'index', :via => :get # Redirects to my/page
-  match 'my/reset_rss_key', :controller => 'my', :action => 'reset_rss_key', :via => :post
-  match 'my/reset_api_key', :controller => 'my', :action => 'reset_api_key', :via => :post
-  match 'my/api_key', :controller => 'my', :action => 'show_api_key', :via => :get
+  get 'my/api_key', :to => 'my#show_api_key', :as => 'my_api_key'
+  post 'my/api_key', :to => 'my#reset_api_key'
+  post 'my/rss_key', :to => 'my#reset_rss_key', :as => 'my_rss_key'
   match 'my/password', :controller => 'my', :action => 'password', :via => [:get, :post]
   match 'my/page_layout', :controller => 'my', :action => 'page_layout', :via => :get
   match 'my/add_block', :controller => 'my', :action => 'add_block', :via => :post
@@ -311,7 +314,10 @@ Rails.application.routes.draw do
       post 'update_issue_done_ratio'
     end
   end
-  resources :custom_fields, :except => :show
+  resources :custom_fields, :except => :show do
+    resources :enumerations, :controller => 'custom_field_enumerations', :except => [:show, :new, :edit]
+    put 'enumerations', :to => 'custom_field_enumerations#update_each'
+  end
   resources :roles do
     collection do
       match 'permissions', :via => [:get, :post]
